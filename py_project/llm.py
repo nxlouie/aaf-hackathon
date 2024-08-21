@@ -26,7 +26,7 @@ relevant urls:
 url 3
 url 4
 
-Give the output in valid json
+Give the output in valid json. Only use the URLs provided in the input data.
 """
 
 def summarize(input_str):

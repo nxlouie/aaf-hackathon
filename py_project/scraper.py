@@ -43,5 +43,3 @@ def get_post_links_from_subreddit(subreddit_url):
         # print("\n" + "-"*50 + "\n")
     
     return ''.join(output)
-
-print(get_post_links_from_subreddit("https://www.reddit.com/r/aznidentity/new/"))
