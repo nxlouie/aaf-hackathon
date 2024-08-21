@@ -23,7 +23,7 @@ def parse_file(filename):
     return title, body, link
 
 def parse_posts_from_file(file_path):
-    keys = ('name', 'summary')
+    keys = ('title', 'body', 'url')
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -52,9 +52,9 @@ def parse_posts_from_file(file_path):
 
 
 #### turn the file into a narrative summary json object
-narrative_summary_user_prompt = system_prompt = PromptTemplate.from_template("title: {title}\nbody: {body}\n")
+narrative_summary_user_prompt = system_prompt = PromptTemplate.from_template("title: {title}\nbody: {body}\nurl: {url}")
 
-def get_narrative_summary(title: str, body: str) -> dict:
+def get_narrative_summary(title: str, body: str, url: str) -> dict:
     message = client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=8192,
@@ -66,7 +66,7 @@ def get_narrative_summary(title: str, body: str) -> dict:
                 "content": [
                     {
                         "type": "text",
-                        "text": narrative_summary_user_prompt.format(title=title, body=body, link=link),
+                        "text": narrative_summary_user_prompt.format(title=title, body=body, url=url),
                     }
                 ]
             }
@@ -118,14 +118,17 @@ def generate_report(personas_data: list[dict]) -> str:
     return message.content
 
 def main() -> None:
-    posts = parse_posts_from_file("py_project/raw_json.data")
+    posts = parse_posts_from_file("py_project/raw_data.json")
+    persona_mappings = []
     for post in posts:
-        title, body = post
+        title, body, url = post
 
-    narrative_summary = get_narrative_summary(title, body)
-    persona_mapping = get_persona_mapping(narrative_summary)
-    print(json.dumps(persona_mapping))
+        narrative_summary = get_narrative_summary(title, body, url)
+        persona_mapping = get_persona_mapping(narrative_summary)
+        persona_mappings.append(persona_mapping)
     
+    print(generate_report(persona_mappings))
+        
 
 if __name__ == "__main__":
     main()
