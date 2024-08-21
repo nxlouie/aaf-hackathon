@@ -11,17 +11,37 @@ def get_post_links_from_subreddit(subreddit_url):
     # Find all anchor tags with 'href' attributes
     articles = soup.find_all('article', href=False)
 
+    # print(articles[0])
+
     # Iterate through each article and extract the content
+
+    output = []
     for i, article in enumerate(articles, start=1):
         title_tag = article.find('a', id=lambda x: x and x.startswith('post-title-'))
+
+        shreddit = article.find('shreddit-post')
+        url = shreddit.get('content-href')
+        score = shreddit.get('score')
+        comments = shreddit.get('comment-count')
+
+
         title = title_tag.get_text(strip=True) if title_tag else 'Title not found'
         
         body_tag = article.find('div', id=lambda x: x and x.endswith('-post-rtjson-content'))
         body = body_tag.get_text(separator="\n", strip=True) if body_tag else 'Body content not found'
         
-        print(f"Article {i}:\n")
-        print("Title:", title)
-        print("\nBody:\n", body)
-        print("\n" + "-"*50 + "\n")
+        output.append(f"URL: {url}\n")
+        output.append(f"score: {score}\n")
+        output.append(f"comments: {comments}\n")
+        output.append(f"Article {i}:\n")
+        output.append(f"Title: {title}")
+        output.append(f"\nBody:\n{body}")
+        output.append("\n" + "-"*50 + "\n")
+        # print(f"Article {i}:\n")
+        # print("Title:", title)
+        # print("\nBody:\n", body)
+        # print("\n" + "-"*50 + "\n")
+    
+    return ''.join(output)
 
-get_post_links_from_subreddit("https://www.reddit.com/r/aznidentity/new/")
+print(get_post_links_from_subreddit("https://www.reddit.com/r/aznidentity/new/"))
