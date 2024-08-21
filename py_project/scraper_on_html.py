@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+import json
 
 # Step 1: Open and read the HTML file
 with open("py_project/azn_identity.html", "r", encoding="utf-8") as file:
@@ -39,6 +40,16 @@ for i, article in enumerate(articles, start=1):
     output.append(f"Title: {title}")
     output.append(f"\nBody:\n{body}")
     output.append("\n" + "-"*50 + "\n")
+    output.append({
+        "article_number": i,
+        "title": title,
+        "url": url,
+        "score": score,
+        "comments": comments,
+        "body": body
+    })
     
-for o in output:
-    print(o)
+json_output = json.dumps(output, indent=4)
+
+print("starting!")
+print(json_output)
