@@ -22,10 +22,39 @@ def parse_file(filename):
     
     return title, body, link
 
-#### turn the file into a narrative summary json object
-narrative_summary_user_prompt = system_prompt = PromptTemplate.from_template("title: {title}\nbody: {body}\nlink: {link}")
+def parse_posts_from_file(file_path):
+    keys = ('name', 'summary')
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+            
+            if not isinstance(data, list):
+                raise ValueError("The file does not contain a JSON list")
+            
+            # Extract specified keys from each object in the list
+            result = [
+                tuple(item.get(key, '') for key in keys)
+                for item in data
+                if isinstance(item, dict)
+            ]
+            
+            return result
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except ValueError as e:
+        print(f"Value error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+    
+    return []  # Return an empty list if there was an error
 
-def get_narrative_summary(title: str, body: str, link: str) -> dict:
+
+#### turn the file into a narrative summary json object
+narrative_summary_user_prompt = system_prompt = PromptTemplate.from_template("title: {title}\nbody: {body}\n")
+
+def get_narrative_summary(title: str, body: str) -> dict:
     message = client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=8192,
@@ -68,9 +97,32 @@ def get_persona_mapping(narrative: dict):
     )
     return json.loads(message.content[0].text)
 
+def generate_report(personas_data: list[dict]) -> str:
+    message = client.messages.create(
+    model="claude-3-5-sonnet-20240620",
+    max_tokens=8192,
+    temperature=0,
+    system="Given a list of json objects, generate a summary report describing the distribution of them. Each json object in the list represents a reddit post and how much it appeals to each of six personas, where each persona name is a key and the value is the appeal score from 0-1.\n\nIf there are any personas that are appealed to a lot more than others or underrepresented, call that out. Factor in both the frequency of low or high values, as well as how low or high they are.\n\nFormat the report like this:\nNumber of data points (posts): ...\nHighest score for each persona: ...\nKey observations and things we might want to look into: ...",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": json.dumps(personas_data)
+                }
+            ]
+        }
+    ]
+    )
+    return message.content
+
 def main() -> None:
-    title, body, link = parse_file("data/tofu.txt")
-    narrative_summary = get_narrative_summary(title, body, link)
+    posts = parse_posts_from_file("py_project/raw_json.data")
+    for post in posts:
+        title, body = post
+
+    narrative_summary = get_narrative_summary(title, body)
     persona_mapping = get_persona_mapping(narrative_summary)
     print(json.dumps(persona_mapping))
     
